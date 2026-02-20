@@ -1,0 +1,21 @@
+# Environment
+.env
+*.env
+
+# Data (PDFs can be large)
+data/
+
+# Vector store (regenerated on run)
+chroma/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.ipynb_checkpoints/
+.venv/
+venv/
+
+# OS
+.DS_Store
+Thumbs.db

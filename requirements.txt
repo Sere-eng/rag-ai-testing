@@ -1,0 +1,47 @@
+# ─────────────────────────────────────────────
+# Core LangChain & LangGraph
+# ─────────────────────────────────────────────
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-text-splitters>=0.3.0
+langchain-community>=0.3.0
+langchain-experimental>=0.3.0
+langgraph>=0.4.0
+
+# ─────────────────────────────────────────────
+# LLM Providers
+# ─────────────────────────────────────────────
+langchain-openai>=0.3.0          # OpenAI + OpenRouter (OpenAI-compatible)
+
+# ─────────────────────────────────────────────
+# Embeddings & Vector Store
+# ─────────────────────────────────────────────
+langchain-chroma>=0.2.0          # LangChain wrapper for Chroma
+chromadb>=0.6.0                  # Persistent vector database
+
+# ─────────────────────────────────────────────
+# Retrieval: Sparse (BM25) + Re-ranking
+# ─────────────────────────────────────────────
+rank-bm25>=0.2.2                 # BM25 sparse retriever
+sentence-transformers>=4.0.0     # Cross-encoder re-ranking (BAAI/bge-reranker-base)
+
+# ─────────────────────────────────────────────
+# Data Ingestion
+# ─────────────────────────────────────────────
+arxiv>=2.1.0                     # Download papers from arXiv
+pypdf>=5.0.0                     # PDF text extraction (LangChain loader)
+pymupdf>=1.24.0                  # PDF → image (multimodal QA section)
+
+# ─────────────────────────────────────────────
+# UI
+# ─────────────────────────────────────────────
+gradio>=5.0.0                    # Chat interface with streaming
+
+# ─────────────────────────────────────────────
+# Utilities
+# ─────────────────────────────────────────────
+python-dotenv>=1.0.0             # Load .env API keys
+tqdm>=4.0.0                      # Progress bars
+nltk>=3.9.0                      # Sentence tokenization
+pydantic>=2.0.0                  # Data validation (LangGraph state, grader)
+pillow>=10.0.0                   # Image handling (multimodal section)
