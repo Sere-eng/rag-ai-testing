@@ -1,10 +1,12 @@
 # ─────────────────────────────────────────────
 # Core LangChain & LangGraph
+# EnsembleRetriever, ParentDocumentRetriever, ContextualCompressionRetriever
+# e CrossEncoderReranker vivono tutti in langchain>=0.3 — non usare 1.x
 # ─────────────────────────────────────────────
-langchain>=0.3.0
-langchain-core>=0.3.0
-langchain-text-splitters>=0.3.0
-langchain-community>=0.3.0
+langchain>=0.3.0,<1.0
+langchain-core>=0.3.0,<1.0
+langchain-text-splitters>=0.3.0,<1.0
+langchain-community>=0.3.0,<1.0
 langchain-experimental>=0.3.0
 langgraph>=0.4.0
 
@@ -18,12 +20,13 @@ langchain-openai>=0.3.0          # OpenAI + OpenRouter (OpenAI-compatible)
 # ─────────────────────────────────────────────
 langchain-chroma>=0.2.0          # LangChain wrapper for Chroma
 chromadb>=0.6.0                  # Persistent vector database
+langchain-huggingface>=0.1.0     # HuggingFace embeddings (BAAI/bge-small-en-v1.5)
 
 # ─────────────────────────────────────────────
 # Retrieval: Sparse (BM25) + Re-ranking
 # ─────────────────────────────────────────────
 rank-bm25>=0.2.2                 # BM25 sparse retriever
-sentence-transformers>=4.0.0     # Cross-encoder re-ranking (BAAI/bge-reranker-base)
+sentence-transformers>=3.0.0     # HuggingFaceCrossEncoder for reranker
 
 # ─────────────────────────────────────────────
 # Data Ingestion

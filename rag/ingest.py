@@ -30,7 +30,7 @@ def download_arxiv_papers(
     Returns:
         List of absolute paths to all available PDFs.
     """
-    output_dir.mkdir(parents=True, exist_ok=True)
+    output_dir.mkdir(parents=True, exist_ok=True) # You create the entire path you need and don't fail if the folder is already there.
     client = arxiv.Client()
     downloaded: list[str] = []
 
@@ -58,7 +58,7 @@ def download_arxiv_papers(
             downloaded.append(str(pdf_path))
 
     # Deduplicate (same paper may appear in multiple queries)
-    unique = list(dict.fromkeys(downloaded))
+    unique = list[str](dict.fromkeys(downloaded))
     print(f"\n✓ {len(unique)} PDFs available in {output_dir}")
     return unique
 
@@ -74,8 +74,8 @@ def load_documents(pdf_paths: List[str]) -> List[Document]:
 
     for path in tqdm(pdf_paths, desc="Loading PDFs"):
         try:
-            loader = PyPDFLoader(path)
-            all_docs.extend(loader.load())
+            loader = PyPDFLoader(path) # It is a LangChain loader that opens the PDF and reads the text page by page
+            all_docs.extend(loader.load()) # At the end all_docs is a flat list of “pages” (each element is a Document with the text of a page and its metadata).
         except Exception as exc:
             print(f"  ⚠ Could not load {path}: {exc}")
 

@@ -17,9 +17,9 @@ Graph structure:
 
 from __future__ import annotations
 
-from typing import Annotated, Literal, Sequence
+from typing import Annotated, Literal, Sequence, cast
 
-from langchain.tools.retriever import create_retriever_tool
+from langchain_core.tools import create_retriever_tool
 from langchain_core.messages import BaseMessage, HumanMessage
 from langchain_core.prompts import PromptTemplate
 from langgraph.graph import END, START, StateGraph
@@ -32,13 +32,42 @@ from rag.config import MAX_REWRITES, get_llm
 
 
 # ── State ──────────────────────────────────────────────────────────────────────
+# Is shared memory between all nodes. Each node reads it and updates it. The two fields are:
 
+# 'messages' — the list of all messages exchanged during the flow. It grows at each node:
+# 'messages' is a list of BaseMessage objects (HumanMessage, AIMessage, SystemMessage, ToolMessage).
+# at the beginning: [HumanMessage(content=user question)]
+# after agent: [HumanMessage(content=user question), AIMessage(content=agent decision)]
+# after retrieve: [user question, agent decision, documents found]
+# after generate: [HumanMessage(content=user question), AIMessage(content=agent decision), ToolMessage(content=documents found), AIMessage(content=final answer)]
+# 'number_of_rewrites' — the number of times the query has been rewritten. It is incremented at each rewrite node.
+#     at the beginning: 0
+#     after rewrite: 1
+#     after rewrite: 2...
+#     after rewrite: MAX_REWRITES
+#     if MAX_REWRITES is reached, the agent will answer directly from its own knowledge.
+#     if MAX_REWRITES is not reached, the agent will rewrite the query and loop back to the agent node.
 class AgentState(TypedDict):
-    messages: Annotated[Sequence[BaseMessage], add_messages]
+    messages: Annotated[Sequence[BaseMessage], add_messages] # This tells LangGraph to hang new messages from the list instead of overwriting it. Without this, each node would delete previous messages and the list would only contain the last message.
     number_of_rewrites: int
 
 
 # ── Node & edge definitions ────────────────────────────────────────────────────
+#                     ┌─────────────────┐
+#                     │  NODO AGENT     │
+#   messages ────────►│  (il cervello)  │
+#   (storia chat +    │                 │
+#    ultima domanda)  │  LLM + tools    │
+#                     └────────┬────────┘
+#                              │
+#               ┌──────────────┼──────────────┐
+#               │              │              │
+#               ▼              ▼              ▼
+#       "Chiama il tool     "Risponde      (dopo 3 rewrite
+#        retriever"          in testo"      senza doc) niente
+#               │              │              tool, risponde
+#               ▼              ▼              comunque
+#          retrieve          END              END
 
 def make_agent_node(tools: list):
     """Returns the agent node function bound to the given tools."""
@@ -66,6 +95,14 @@ def grade_documents(state: AgentState) -> Literal["generate", "rewrite"]:
     """
     print("--- GRADING DOCUMENTS ---")
 
+    # BaseModel (Pydantic) defines a typed, validated data schema. GradeScore(BaseModel)
+    # means "GradeScore is a Pydantic model" with a single field binary_score (str).
+    # Field(description=...) is used for LLM structured output: the description guides
+    # the model on what to put in that field. BaseModel gives: validation on wrong types,
+    # creation from dict (GradeScore(**{"binary_score": "yes"})), attribute access
+    # (result.binary_score), and serialization (.model_dump(), .model_dump_json()).
+    # with_structured_output(GradeScore) tells the LLM to respect this schema; LangChain
+    # uses Pydantic to parse the model output and return a GradeScore instance.
     class GradeScore(BaseModel):
         """Binary relevance score for a retrieved document."""
         binary_score: str = Field(description="'yes' if document is relevant, 'no' otherwise")
@@ -85,7 +122,10 @@ def grade_documents(state: AgentState) -> Literal["generate", "rewrite"]:
     question = state["messages"][0].content
     docs = state["messages"][-1].content
 
-    result = (grade_prompt | grader_llm).invoke({"question": question, "context": docs})
+    result = cast(
+        GradeScore,
+        (grade_prompt | grader_llm).invoke({"question": question, "context": docs}),
+    )
 
     if result.binary_score == "yes":
         print("  → Documents RELEVANT — generating answer")
@@ -123,6 +163,37 @@ def generate(state: AgentState) -> dict:
     question = state["messages"][0].content
     context  = state["messages"][-1].content
 
+    # Log a snippet of the context used, so you can see
+    # which chunks (e quindi quali PDF/sezioni) hanno
+    # contribuito alla risposta.
+    print("\n=== CONTEXT USED (truncated) ===")
+    print(str(context)[:1000])
+    print("=== END CONTEXT ===\n")
+
+    # Try to extract source / page metadata for simple citations.
+    sources_block = ""
+    try:
+        if isinstance(context, list):
+            seen: set[tuple[str | None, int | None]] = set()
+            lines = []
+            for idx, doc in enumerate(context, 1):
+                meta = getattr(doc, "metadata", {}) or {}
+                src  = meta.get("source") or meta.get("file_path")
+                page = meta.get("page")
+                key  = (src, page)
+                if not src or key in seen:
+                    continue
+                seen.add(key)
+                line = f"[{idx}] {src}"
+                if page is not None:
+                    line += f" (page {page})"
+                lines.append(line)
+            if lines:
+                sources_block = "\n".join(lines)
+    except Exception:
+        # If anything goes wrong, we just skip citations.
+        sources_block = ""
+
     gen_prompt = PromptTemplate(
         template=(
             "You are an expert assistant on AI-driven software testing.\n"
@@ -138,6 +209,11 @@ def generate(state: AgentState) -> dict:
 
     gen_llm = get_llm(temperature=0.3)
     response = (gen_prompt | gen_llm).invoke({"context": context, "question": question})
+
+    # Append sources at the end of the answer, if available.
+    if sources_block and hasattr(response, "content") and isinstance(response.content, str):
+        response.content = f"{response.content}\n\nSources:\n{sources_block}"
+
     return {"messages": [response], "number_of_rewrites": state["number_of_rewrites"]}
 
 

@@ -4,6 +4,8 @@ A **production-grade Retrieval-Augmented Generation (RAG)** pipeline applied to 
 
 This project demonstrates how to build a complete, end-to-end RAG system integrating multiple advanced techniques into a single coherent pipeline.
 
+![Agentic RAG demo](docs/AgenticRAG.gif)
+
 ---
 
 ## What is RAG? (Retrieval-Augmented Generation)
@@ -54,8 +56,21 @@ arXiv PDFs
 | 5 | **Agentic RAG (LangGraph)** | Graph: Agent → (optional) Retrieve → Grade → if not relevant Rewrite and loop back to Agent; if relevant → Generate. | The agent decides whether to search or answer; a "grader" checks if documents are useful; if not, the query is rewritten (up to N times) to improve retrieval. |
 | 6 | **Gradio Streaming UI** | Interactive chat with real-time token streaming. | Better UX for long answers. |
 | 7 | **Multimodal QA** | PDF pages as images for vision-LLM reasoning. | Optional path for figures and layout. |
-
 ---
+
+### Chunking padre-figlio (Parent-Document Retriever)
+
+Si indicizzano **chunk piccoli** (figli) per la ricerca, ma si restituisce al LLM il **chunk grande** (padre) che li contiene: ricerca più precisa sui figli, contesto più ricco per la risposta.
+
+<pre>
+testo originale
+├── parent (2000 chars) ──────────────────────┐
+│   ├── child (400 chars) ← cercato           │
+│   ├── child (400 chars)                     │
+│   └── child (400 chars)                     │
+│                                             ↓
+│                                 restituito al LLM
+</pre>
 
 ## Overall Pipeline Flow
 
@@ -135,6 +150,25 @@ On first run the pipeline will:
 
 Subsequent runs reuse all cached data automatically.
 
+### 4. Controlli dopo aggiornamenti
+
+Dopo aver aggiornato le dipendenze (`pip install -r requirements.txt --upgrade`) puoi verificare che import e retrieval funzionino:
+
+```bash
+# Verifica import + mini test retrieval (usa Chroma in temp, non tocca ./chroma/)
+python scripts/check_stack.py
+
+# Solo import, senza scaricare il modello di reranking
+python scripts/check_stack.py --quick
+```
+
+Lo script:
+- controlla che si importino `rag.config`, `rag.retrieval`, `rag.agent`, `rag.chunking`, `rag.ingest`;
+- indica se `ContextualCompressionRetriever` viene da LangChain ufficiale o dal fallback locale;
+- opzionalmente lancia un mini test di retrieval (chunks finti, Chroma in directory temporanea).
+
+Se tutto è ok esce con codice 0; in caso di errore stampa i messaggi e esce con 1.
+
 ---
 
 ## Project Structure
@@ -142,6 +176,8 @@ Subsequent runs reuse all cached data automatically.
 ```
 rag-ai-testing/
 ├── main.py              # CLI entry point
+├── scripts/
+│   └── check_stack.py   # Verifica import e retrieval dopo aggiornamenti
 ├── rag/
 │   ├── __init__.py
 │   ├── config.py        # LLM/embedding factory & global parameters

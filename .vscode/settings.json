@@ -1,0 +1,12 @@
+{
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.completeFunctionParens": true,
+  "python.analysis.indexing": true,
+  "python.analysis.extraPaths": ["${workspaceFolder}"],
+  "editor.quickSuggestions": {
+    "other": "on",
+    "comments": "off",
+    "strings": "on"
+  }
+}
