@@ -228,8 +228,6 @@ Bi-encoder embeddings (used in Chroma) trade accuracy for speed. The cross-encod
 LangGraph provides explicit state management and conditional edges, making the retrieve→grade→rewrite loop transparent and debuggable compared to opaque agent frameworks.
 ---
 
----
-
 ## Evaluation & Quality Considerations
 
 The pipeline is designed to optimize retrieval quality rather than relying on default vector search.
@@ -242,9 +240,8 @@ Quality improvements are achieved through:
 - Agentic grading step to detect low-relevance retrievals
 - Controlled query rewriting (bounded by `MAX_REWRITES`)
 
-While evaluation is currently qualitative (manual inspection of top-k relevance and answer grounding), the architecture is structured to support future quantitative benchmarks (e.g., precision@k, recall@k, MRR).
----
-
+**Evaluation is currently qualitative**, based on manual inspection of top-k relevance and answer grounding.  
+The architecture is structured to support future quantitative benchmarks (e.g., precision@k, recall@k, MRR).
 ---
 
 ## Related Projects
