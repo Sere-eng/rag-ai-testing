@@ -1,8 +1,8 @@
 # Advanced RAG Pipeline for AI-Driven Test Automation
 
-A **production-grade Retrieval-Augmented Generation (RAG)** pipeline applied to academic literature on AI testing and test automation.
+A **production-grade Retrieval-Augmented Generation (RAG)** pipeline designed to experiment with retrieval strategies, reranking techniques, and agentic control loops under realistic constraints.
 
-This project demonstrates how to build a complete, end-to-end RAG system integrating multiple advanced techniques into a single coherent pipeline.
+Applied to academic literature on AI-driven testing, this project focuses on retrieval quality, controllability, and measurable improvements rather than simple document-grounded chat.
 
 ![Agentic RAG demo](docs/AgenticRAG.gif)
 
@@ -226,6 +226,24 @@ Bi-encoder embeddings (used in Chroma) trade accuracy for speed. The cross-encod
 
 **Why LangGraph for the agent?**  
 LangGraph provides explicit state management and conditional edges, making the retrieve→grade→rewrite loop transparent and debuggable compared to opaque agent frameworks.
+---
+
+---
+
+## Evaluation & Quality Considerations
+
+The pipeline is designed to optimize retrieval quality rather than relying on default vector search.
+
+Quality improvements are achieved through:
+
+- Hybrid retrieval (BM25 + dense) to increase recall
+- Cross-encoder re-ranking to improve precision at top-k
+- Parent-document strategy to balance embedding granularity and context completeness
+- Agentic grading step to detect low-relevance retrievals
+- Controlled query rewriting (bounded by `MAX_REWRITES`)
+
+While evaluation is currently qualitative (manual inspection of top-k relevance and answer grounding), the architecture is structured to support future quantitative benchmarks (e.g., precision@k, recall@k, MRR).
+---
 
 ---
 
