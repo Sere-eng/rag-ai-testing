@@ -226,6 +226,7 @@ Bi-encoder embeddings (used in Chroma) trade accuracy for speed. The cross-encod
 
 **Why LangGraph for the agent?**  
 LangGraph provides explicit state management and conditional edges, making the retrieve→grade→rewrite loop transparent and debuggable compared to opaque agent frameworks.
+
 ---
 
 ## Evaluation & Quality Considerations
@@ -242,6 +243,7 @@ Quality improvements are achieved through:
 
 **Evaluation is currently qualitative**, based on manual inspection of top-k relevance and answer grounding.  
 The architecture is structured to support future quantitative benchmarks (e.g., precision@k, recall@k, MRR).
+
 ---
 
 ## Related Projects
